@@ -30,9 +30,11 @@ BIN_C_VIRTUAL := $(TARGET_DIR)/encoder_asservpi_c
 BIN_C_WIRING := $(TARGET_DIR)/encoder_wiringpi_c $(TARGET_DIR)/encoder $(TARGET_DIR)/moteur
 BIN_CPP_VIRTUAL := $(TARGET_DIR)/encoder_asservpi_cpp
 BIN_CPP_WIRING := $(TARGET_DIR)/encoder_wiringpi_cpp
+BIN_CPP_TELEOP := $(TARGET_DIR)/teleop
+BIN_CPP_TELEOP_AIMANT := $(TARGET_DIR)/teleop_aimant
 BIN_RUST := $(TARGET_DIR)/encoder_asservpi_rs
 
-ALL_BINS := $(BIN_C_VIRTUAL) $(BIN_C_WIRING) $(BIN_CPP_VIRTUAL) $(BIN_CPP_WIRING) $(BIN_RUST)
+ALL_BINS := $(BIN_C_VIRTUAL) $(BIN_C_WIRING) $(BIN_CPP_VIRTUAL) $(BIN_CPP_WIRING) $(BIN_CPP_TELEOP) $(BIN_CPP_TELEOP_AIMANT) $(BIN_RUST)
 
 .PHONY: all c cpp rust rpi clean help
 
@@ -40,7 +42,7 @@ all: $(ALL_BINS)
 
 c: $(BIN_C_VIRTUAL) $(BIN_C_WIRING)
 
-cpp: $(BIN_CPP_VIRTUAL) $(BIN_CPP_WIRING)
+cpp: $(BIN_CPP_VIRTUAL) $(BIN_CPP_WIRING) $(BIN_CPP_TELEOP) $(BIN_CPP_TELEOP_AIMANT)
 
 rust: $(BIN_RUST)
 
@@ -68,6 +70,12 @@ $(TARGET_DIR)/encoder_asservpi_cpp: $(SRC_DIR)/encoder_asservpi.cpp | $(TARGET_D
 $(TARGET_DIR)/encoder_wiringpi_cpp: $(SRC_DIR)/encoder_wiringpi.cpp | $(TARGET_DIR)
 	$(CXX) $(CXXFLAGS) $< -o $@ $(PTHREAD_LIB) $(WIRINGPI_LIB) $(LDFLAGS)
 
+$(TARGET_DIR)/teleop: $(SRC_DIR)/teleop.cpp | $(TARGET_DIR)
+	$(CXX) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@ $(ASSERVPI_CPP_LIBS) $(LDFLAGS)
+
+$(TARGET_DIR)/teleop_aimant: $(SRC_DIR)/teleop_aimant.cpp | $(TARGET_DIR)
+	$(CXX) $(CXXFLAGS) $(EXTRA_CXXFLAGS) $< -o $@ $(ASSERVPI_CPP_LIBS) $(LDFLAGS)
+
 $(TARGET_DIR)/encoder_asservpi_rs: $(SRC_DIR)/Cargo.toml $(SRC_DIR)/encoder_asservpi.rs | $(TARGET_DIR)
 	CARGO_TARGET_DIR="$(ROOT)/$(TARGET_DIR)" cargo build --manifest-path "$(SRC_DIR)/Cargo.toml" --release --bin encoder_asservpi $(RUST_FEATURE_ARGS)
 	cp "$(TARGET_DIR)/release/encoder_asservpi" "$@"
@@ -85,6 +93,8 @@ help:
 	@echo "  make c          : compile les programmes C"
 	@echo "  make cpp        : compile les programmes C++"
 	@echo "  make rust       : compile le binaire Rust (copie vers $(TARGET_DIR)/)"
+	@echo "  make $(TARGET_DIR)/teleop : compile le teleop croise en C++"
+	@echo "  make $(TARGET_DIR)/teleop_aimant : compile le teleop aimant en C++"
 	@echo "  make rpi        : equivalent a make RPI=1 all"
 	@echo "  make clean      : supprime les executables generes"
 	@echo "Variables utiles :"
